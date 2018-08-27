@@ -31,8 +31,8 @@ namespace CartBuilder
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var dataBaseConnector = GetDbConnector();
-            GetFacades();
+            GetDbConnector(services);
+            GetFacades(services);
             
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
@@ -53,7 +53,7 @@ namespace CartBuilder
             app.UseMvc();
         }
 
-        private static IDataBaseConnector GetDbConnector()
+        private static void GetDbConnector(IServiceCollection services)
         {
             var configJson = System.IO.File.ReadAllText(ConfigConstants.DatabaseConfigPath);
             var configModel = JsonConvert.DeserializeObject<DatabaseConnectionConfig>(configJson);
@@ -65,17 +65,34 @@ namespace CartBuilder
                             && p.Name.ToLower().StartsWith(configModel.Type))
                 .ToList().First();
             
-            return (IDataBaseConnector) Activator.CreateInstance(connectorType, configModel);
+            services.AddSingleton<IDataBaseConnector>((IDataBaseConnector)
+                Activator.CreateInstance(connectorType, configModel));
         }
 
-        private static void GetFacades()
+        private static void GetFacades(IServiceCollection services)
         {
-            var configJson = System.IO.File.ReadAllText(ConfigConstants.DatabaseConfigPath);
+            var configJson = System.IO.File.ReadAllText(ConfigConstants.FacadeConfigPath);
             var configModel = JsonConvert.DeserializeObject<FacadeUsageConfig>(configJson);
-            var facades = AppDomain.CurrentDomain.GetAssemblies()
+            var facadeInterfaces = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
                 .Where(p => typeof(IFacade).IsAssignableFrom(p)
-                            && p.IsInterface).ToList();
+                            && p.IsInterface
+                            && p.Name != typeof(IFacade).Name).ToList();
+            
+            foreach (var facadeInterface in facadeInterfaces)
+            {
+                var facadeClasses = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(s => s.GetTypes())
+                    .Where(p => facadeInterface.IsAssignableFrom(p)
+                                && !p.IsInterface
+                                && !p.IsAbstract)
+                    .ToList();
+                var facadeType = facadeClasses.Find(s => s.Name.ToLower().StartsWith(configModel.Type));
+                if (facadeType == null) 
+                    facadeType = facadeClasses.Find(s => s.Name.ToLower()
+                        .StartsWith(InstantiationConstants.DefaultConstant));
+                services.AddSingleton(facadeInterface, facadeType);
+            }
         }
     }
 }
