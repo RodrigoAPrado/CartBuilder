@@ -14,6 +14,7 @@ namespace CartBuilder
     {
         public static void Main(string[] args)
         {
+            // Testing push permissions
             CreateWebHostBuilder(args).Build().Run();
         }
 
