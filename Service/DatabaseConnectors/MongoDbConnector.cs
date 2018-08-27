@@ -1,16 +1,20 @@
+using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Service.Abstractions;
 using Service.Models;
+using Service.Models.Database;
+using Service.Models.Mongo;
 
 namespace Service.DatabaseConnectors
 {
     /// <summary>
     /// Defines database connection with mongo db.
     /// </summary>
-    public class MongoDbConnector : IDataBaseConnector
+    public class MongoDbConnector : IDatabaseConnector
     {
         private readonly IMongoDatabase db;
+        private readonly IMongoCollection<ProductMongo> productCollection;
 
         /// <summary>
         /// Initiates a new instance of <see cref="MongoDbConnector"/>.
@@ -18,13 +22,16 @@ namespace Service.DatabaseConnectors
         /// <param name="config">Connection configuration.</param>
         public MongoDbConnector(DatabaseConnectionConfig config)
         {
-            var client = new MongoClient(config.Connection);
+            var client = new MongoClient(new MongoUrl(config.Connection));
             db = client.GetDatabase(config.DatabaseName);
+            productCollection = db.GetCollection<ProductMongo>("products");
+            FilterDefinition<ProductMongo> filter = FilterDefinition<ProductMongo>.Empty;
+            var teste = productCollection.FindSync(filter).ToList();
         }
 
-        public bool Search(SearchInput input)
+        public QueryResult<IProduct> Search(SearchInput input)
         {
-            return false;
+            return null;
         }
     }
 }

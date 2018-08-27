@@ -59,13 +59,13 @@ namespace CartBuilder
             var configModel = JsonConvert.DeserializeObject<DatabaseConnectionConfig>(configJson);
             var connectorType = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
-                .Where(p => typeof(IDataBaseConnector).IsAssignableFrom(p) 
+                .Where(p => typeof(IDatabaseConnector).IsAssignableFrom(p) 
                             && !p.IsInterface 
                             && !p.IsAbstract
                             && p.Name.ToLower().StartsWith(configModel.Type))
                 .ToList().First();
             
-            services.AddSingleton<IDataBaseConnector>((IDataBaseConnector)
+            services.AddSingleton<IDatabaseConnector>((IDatabaseConnector)
                 Activator.CreateInstance(connectorType, configModel));
         }
 
@@ -87,11 +87,11 @@ namespace CartBuilder
                                 && !p.IsInterface
                                 && !p.IsAbstract)
                     .ToList();
-                var facadeType = facadeClasses.Find(s => s.Name.ToLower().StartsWith(configModel.Type));
-                if (facadeType == null) 
-                    facadeType = facadeClasses.Find(s => s.Name.ToLower()
+                var facadeClass = facadeClasses.Find(s => s.Name.ToLower().StartsWith(configModel.Type));
+                if (facadeClass == null) 
+                    facadeClass = facadeClasses.Find(s => s.Name.ToLower()
                         .StartsWith(InstantiationConstants.DefaultConstant));
-                services.AddSingleton(facadeInterface, facadeType);
+                services.AddSingleton(facadeInterface, facadeClass);
             }
         }
     }

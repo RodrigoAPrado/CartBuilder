@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstractions;
 using Service.Models;
+using Service.Models.Database;
 
 namespace Api.Controllers
 {
@@ -11,7 +12,7 @@ namespace Api.Controllers
     [ApiController]
     public class SearchController : Controller
     {
-        private ISearchFacade searchFacade;
+        private readonly ISearchFacade searchFacade;
         
         public SearchController(ISearchFacade searchFacade)
         {
@@ -20,7 +21,7 @@ namespace Api.Controllers
         
         // POST api/values
         [HttpPost]
-        public bool Search([FromBody] SearchInput value)
+        public QueryResult<IProduct> Search([FromBody] SearchInput value)
         {
             return searchFacade.Search(value);
         }

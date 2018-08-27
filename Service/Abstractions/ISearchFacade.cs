@@ -1,4 +1,5 @@
 using Service.Models;
+using Service.Models.Database;
 
 namespace Service.Abstractions
 {
@@ -12,6 +13,6 @@ namespace Service.Abstractions
         /// </summary>
         /// <param name="input">Input for search.</param>
         /// <returns>Search results.</returns>
-        bool Search(SearchInput input);
+        QueryResult<IProduct> Search(SearchInput input);
     }
 }
